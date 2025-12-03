@@ -1,0 +1,100 @@
+[
+  {
+    "Id": "24131cb5-3b30-4b34-b9b9-d38e06765324",
+    "Title": "To Kill a Mockingbird",
+    "AuthorName": "Harper Lee",
+    "YearOfPublication": 1960,
+    "BookState": 1
+  },
+  {
+    "Id": "b0f55ee9-e414-46bf-985a-77a77a51c2a0",
+    "Title": "1984",
+    "AuthorName": "George Orwell",
+    "YearOfPublication": 1949,
+    "BookState": 0
+  },
+  {
+    "Id": "960d13f8-2fc7-4879-95c0-e509db701dfa",
+    "Title": "The Great Gatsby",
+    "AuthorName": "F. Scott Fitzgerald",
+    "YearOfPublication": 1925,
+    "BookState": 1
+  },
+  {
+    "Id": "7b7bbccd-3d67-4170-b176-1e95a400e79e",
+    "Title": "Pride and Prejudice",
+    "AuthorName": "Jane Austen",
+    "YearOfPublication": 1813,
+    "BookState": 0
+  },
+  {
+    "Id": "c84b6647-93d8-4d52-b445-8685e9a77c2a",
+    "Title": "Moby-Dick",
+    "AuthorName": "Herman Melville",
+    "YearOfPublication": 1851,
+    "BookState": 0
+  },
+  {
+    "Id": "8163845d-cd04-42aa-805f-88baaccb3d18",
+    "Title": "The Catcher in the Rye",
+    "AuthorName": "J.D. Salinger",
+    "YearOfPublication": 1951,
+    "BookState": 1
+  },
+  {
+    "Id": "bb47ba71-d76d-48eb-83a5-48f9a8eb1557",
+    "Title": "The Hobbit",
+    "AuthorName": "J.R.R. Tolkien",
+    "YearOfPublication": 1937,
+    "BookState": 0
+  },
+  {
+    "Id": "fc3844aa-a976-4c73-b7c8-48bb2268e9f0",
+    "Title": "Fahrenheit 451",
+    "AuthorName": "Ray Bradbury",
+    "YearOfPublication": 1953,
+    "BookState": 0
+  },
+  {
+    "Id": "4fd1c59a-ba51-4817-ade5-35e8a3c32e59",
+    "Title": "Brave New World",
+    "AuthorName": "Aldous Huxley",
+    "YearOfPublication": 1932,
+    "BookState": 1
+  },
+  {
+    "Id": "ab4bfee6-8a21-4d75-a9aa-32ed146b39d5",
+    "Title": "The Old Man and the Sea",
+    "AuthorName": "Ernest Hemingway",
+    "YearOfPublication": 1952,
+    "BookState": 0
+  },
+  {
+    "Id": "73f1acb2-0d67-42fe-bbad-0eb7ea4bfb3d",
+    "Title": "Homage to Catalonia",
+    "AuthorName": "George Orwell",
+    "YearOfPublication": 1938,
+    "BookState": 0
+  },
+  {
+    "Id": "eba30a4b-dcd2-4469-99fb-3ccecb0e10bb",
+    "Title": "Down and Out in Paris and London",
+    "AuthorName": "George Orwell",
+    "YearOfPublication": 1933,
+    "BookState": 0
+  },
+  {
+    "Id": "bb4274ab-65c0-4856-8ca1-20c13a8d560c",
+    "Title": "Keep the Aspidistra Flying",
+    "AuthorName": "George Orwell",
+    "YearOfPublication": 1936,
+    "BookState": 1
+  },
+  {
+    "Id": "fb7f89d4-783d-46ae-9d61-8cae5a01fad4",
+    "Title": "Coming Up for Air",
+    "AuthorName": "George Orwell",
+    "YearOfPublication": 1939,
+    "BookState": 1
+  }
+]
