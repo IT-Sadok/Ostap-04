@@ -2,6 +2,6 @@
 
 public interface ILibraryManagement
 {
-    void BorrowBook(Guid id);
+    bool BorrowBook(Guid id);
     bool ReturnBook(Guid id);
 }

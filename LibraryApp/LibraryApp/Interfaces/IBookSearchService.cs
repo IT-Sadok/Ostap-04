@@ -4,7 +4,5 @@ namespace LibraryApp.Interfaces;
 
 public interface IBookSearchService
 {
-    IEnumerable<Book> FindBooksByAuthor(string author);
-    IEnumerable<Book> FindBooksByTitle(string title);
-    IEnumerable<Book> GetAllAvailableBooks();
+    IEnumerable<BookModel> FindBooks(BookFilterModel filterModel);
 }

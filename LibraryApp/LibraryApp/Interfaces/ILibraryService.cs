@@ -4,7 +4,7 @@ namespace LibraryApp.Interfaces;
 
 public interface ILibraryService: IBookSearchService, ILibraryManagement
 {
-    IReadOnlyList<Book> GetAllBooks();
+    IReadOnlyList<BookModel> GetAllBooks();
     void AddBook(Book book);
     bool RemoveById(Guid id);
 }

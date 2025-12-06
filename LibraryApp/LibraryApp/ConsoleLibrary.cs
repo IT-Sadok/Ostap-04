@@ -17,12 +17,10 @@ public class ConsoleLibrary
         Console.WriteLine("====== Library Menu ======");
         Console.WriteLine("1. Add book");
         Console.WriteLine("2. Remove book by id");
-        Console.WriteLine("3. Search book by author");
-        Console.WriteLine("4. Search book by title");
-        Console.WriteLine("5. Show all books");
-        Console.WriteLine("6. Show all available books");
-        Console.WriteLine("7. Borrow book");
-        Console.WriteLine("8. Return book");
+        Console.WriteLine("3. Filter books (Author, Title, Availability)");
+        Console.WriteLine("4. Show all books");
+        Console.WriteLine("5. Borrow book");
+        Console.WriteLine("6. Return book");
         Console.WriteLine("0. Exit");
         Console.WriteLine("*. Show menu");
         Console.WriteLine("========================");
@@ -46,21 +44,15 @@ public class ConsoleLibrary
                     RemoveBook();
                     break;
                 case "3":
-                    SearchBooksByAuthor();
+                    FilterBooks();
                     break;
                 case "4":
-                    SearchBooksByTitle();
-                    break;
-                case "5":
                     ShowAllBooks();
                     break;
-                case "6":
-                    ShowAvailableBooks();
-                    break;
-                case "7":
+                case "5":
                     BorrowBook();
                     break;
-                case "8":
+                case "6":
                     ReturnBook();
                     break;
                 case "0":
@@ -92,13 +84,13 @@ public class ConsoleLibrary
             year = 0;
         }
 
-        var book = new Book
-        {
-            Id = Guid.NewGuid(),
-            Title = title,
-            AuthorName = author,
-            YearOfPublication = year
-        };
+        var book = new Book(
+        
+            Guid.NewGuid(),
+            title,
+            author,
+            year
+        );
 
         try
         {
@@ -126,33 +118,30 @@ public class ConsoleLibrary
         Console.WriteLine(_libraryService.RemoveById(bookId) ? "Book removed" : "Book with such id is not found");
     }
 
-    private void SearchBooksByAuthor()
+    private void FilterBooks()
     {
-        Console.WriteLine("====== Searching book by author name ======");
+        Console.WriteLine("====== Filtering books ======");
         Console.Write("Enter author name: ");
-        var author = Console.ReadLine() ?? string.Empty;
-        var books = _libraryService.FindBooksByAuthor(author);
-        PrintBooks(books);
-    }
-
-    private void SearchBooksByTitle()
-    {
-        Console.WriteLine("====== Searching book by title ======");
+        var authorName = Console.ReadLine() ?? string.Empty;
         Console.Write("Enter title: ");
         var title = Console.ReadLine() ?? string.Empty;
-        var books = _libraryService.FindBooksByTitle(title);
+        Console.Write("Search only available books (y/n): ");
+        var available = Console.ReadLine() == "y";
+
+        var filterModel = new BookFilterModel
+        {
+            AuthorName = authorName,
+            Title = title,
+            Available = available
+        };
+        
+        var books = _libraryService.FindBooks(filterModel);
         PrintBooks(books);
     }
 
     private void ShowAllBooks()
     {
         var books = _libraryService.GetAllBooks();
-        PrintBooks(books);
-    }
-
-    private void ShowAvailableBooks()
-    {
-        var books = _libraryService.GetAllAvailableBooks();
         PrintBooks(books);
     }
 
@@ -170,8 +159,7 @@ public class ConsoleLibrary
 
         try
         {
-            _libraryService.BorrowBook(bookId);
-            Console.WriteLine("Book borrowed");
+            Console.WriteLine(_libraryService.BorrowBook(bookId) ? "Book borrowed" : "Book was already borrowed");
         }
         catch (Exception e)
         {
@@ -201,7 +189,7 @@ public class ConsoleLibrary
         }
     }
 
-    private static void PrintBooks(IEnumerable<Book> books)
+    private static void PrintBooks(IEnumerable<BookModel> books)
     {
         var enumerable = books.ToList();
         if (enumerable.Count == 0)

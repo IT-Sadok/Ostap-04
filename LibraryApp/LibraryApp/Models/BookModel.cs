@@ -1,6 +1,6 @@
 ﻿namespace LibraryApp.Models;
 
-public record Book(
+public record BookModel(
     Guid Id,
     string Title,
     string AuthorName,

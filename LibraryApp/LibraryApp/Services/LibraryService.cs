@@ -12,7 +12,7 @@ public class LibraryService : ILibraryService
         _jsonBookRepository = jsonBookRepository;
     }
 
-    public IReadOnlyList<Book> GetAllBooks() => _jsonBookRepository.GetAll();
+    public IReadOnlyList<BookModel> GetAllBooks() => _jsonBookRepository.GetAll().Select(ToBookModel).ToList();
 
     public void AddBook(Book book)
     {
@@ -36,41 +36,47 @@ public class LibraryService : ILibraryService
         return _jsonBookRepository.RemoveById(id);
     }
 
-    public IEnumerable<Book> FindBooksByAuthor(string author)
+    public IEnumerable<BookModel> FindBooks(BookFilterModel filterModel)
     {
-        if (!string.IsNullOrEmpty(author))
+        ArgumentNullException.ThrowIfNull(filterModel);
+        
+        var query = _jsonBookRepository.GetAll().AsQueryable();
+
+            
+        if (!string.IsNullOrWhiteSpace(filterModel.AuthorName))
         {
-            return _jsonBookRepository.GetAll().Where(b => b.AuthorName.Contains(author));
+            query = query.Where(b => b.AuthorName.Contains(filterModel.AuthorName));
         }
 
-        return [];
-    }
-
-    public IEnumerable<Book> FindBooksByTitle(string title)
-    {
-        if (!string.IsNullOrEmpty(title))
+        if (!string.IsNullOrWhiteSpace(filterModel.Title))
         {
-            return _jsonBookRepository.GetAll().Where(b => b.Title.Contains(title));
+            query = query.Where(b => b.Title.Contains(filterModel.Title));
         }
 
-        return [];
+        if (filterModel.Available == true)
+        {
+            query = query.Where(b => b.BookState == BookState.Available);
+        }
+
+        return query.AsEnumerable().Select(ToBookModel);
     }
 
-    public IEnumerable<Book> GetAllAvailableBooks()
-    {
-        return _jsonBookRepository.GetAll().Where(b => b.BookState == BookState.Available);
-    }
-
-    public void BorrowBook(Guid id)
+    public bool BorrowBook(Guid id)
     {
         var book = GetBookById(id);
         if (book.BookState == BookState.CheckedOut)
         {
-            throw new InvalidOperationException("Book already checked-out");
+            return false;
         }
 
-        book.BookState = BookState.CheckedOut;
-        _jsonBookRepository.Update(book);
+        var updatedBook = book with
+        {
+            BookState = BookState.CheckedOut
+        };
+        
+        _jsonBookRepository.Update(updatedBook);
+
+        return true;
     }
 
     public bool ReturnBook(Guid id)
@@ -82,12 +88,24 @@ public class LibraryService : ILibraryService
             return false;
         }
 
-        book.BookState = BookState.Available;
-        _jsonBookRepository.Update(book);
+        var updatedBook = book with
+        {
+            BookState = BookState.Available
+        };
+        
+        _jsonBookRepository.Update(updatedBook);
 
         return true;
     }
 
     private Book GetBookById(Guid id) =>
         _jsonBookRepository.GetById(id) ?? throw new KeyNotFoundException("Book not found");
+
+    private static BookModel ToBookModel(Book book) => new(
+        book.Id,
+        book.Title,
+        book.AuthorName,
+        book.YearOfPublication,
+        book.BookState
+    );
 }
