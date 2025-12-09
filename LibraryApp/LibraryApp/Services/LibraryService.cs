@@ -14,7 +14,7 @@ public class LibraryService : ILibraryService
 
     public IReadOnlyList<BookModel> GetAllBooks() => _jsonBookRepository.GetAll().Select(ToBookModel).ToList();
 
-    public void AddBook(Book book)
+    public async Task AddBookAsync(Book book)
     {
         ArgumentNullException.ThrowIfNull(book);
 
@@ -23,26 +23,41 @@ public class LibraryService : ILibraryService
             throw new ArgumentException("Book id cannot be empty");
         }
 
+
         if (_jsonBookRepository.GetById(book.Id) is not null)
         {
             throw new ArgumentException("Book already exists");
         }
 
-        _jsonBookRepository.Add(book);
+        await _jsonBookRepository.AddAsync(book);
     }
 
-    public bool RemoveById(Guid id)
+    public async Task<bool> RemoveByIdAsync(Guid id)
     {
-        return _jsonBookRepository.RemoveById(id);
+        return await _jsonBookRepository.RemoveByIdAsync(id);
+    }
+
+    public async Task EditBookAsync(Guid id, string title, string authorName, int yearOfPublication)
+    {
+        var book = GetBookById(id);
+
+        var updatedBook = book with
+        {
+            Title = title,
+            AuthorName = authorName,
+            YearOfPublication = yearOfPublication
+        };
+
+        await _jsonBookRepository.UpdateAsync(updatedBook);
     }
 
     public IEnumerable<BookModel> FindBooks(BookFilterModel filterModel)
     {
         ArgumentNullException.ThrowIfNull(filterModel);
-        
+
         var query = _jsonBookRepository.GetAll().AsQueryable();
 
-            
+
         if (!string.IsNullOrWhiteSpace(filterModel.AuthorName))
         {
             query = query.Where(b => b.AuthorName.Contains(filterModel.AuthorName));
@@ -61,7 +76,7 @@ public class LibraryService : ILibraryService
         return query.AsEnumerable().Select(ToBookModel);
     }
 
-    public bool BorrowBook(Guid id)
+    public async Task<bool> BorrowBookAsync(Guid id)
     {
         var book = GetBookById(id);
         if (book.BookState == BookState.CheckedOut)
@@ -73,13 +88,13 @@ public class LibraryService : ILibraryService
         {
             BookState = BookState.CheckedOut
         };
-        
-        _jsonBookRepository.Update(updatedBook);
+
+        await _jsonBookRepository.UpdateAsync(updatedBook);
 
         return true;
     }
 
-    public bool ReturnBook(Guid id)
+    public async Task<bool> ReturnBookAsync(Guid id)
     {
         var book = GetBookById(id);
 
@@ -92,24 +107,10 @@ public class LibraryService : ILibraryService
         {
             BookState = BookState.Available
         };
-        
-        _jsonBookRepository.Update(updatedBook);
+
+        await _jsonBookRepository.UpdateAsync(updatedBook);
 
         return true;
-    }
-
-    public void EditBook(Guid id, string title, string authorName, int yearOfPublication)
-    {
-        var book = GetBookById(id);
-
-        var updatedBook = book with
-        {
-            Title = title,
-            AuthorName = authorName,
-            YearOfPublication = yearOfPublication
-        };
-        
-        _jsonBookRepository.Update(updatedBook);
     }
 
     private Book GetBookById(Guid id) =>

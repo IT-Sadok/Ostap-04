@@ -6,7 +6,7 @@ public interface IBookRepository
 {
     IReadOnlyList<Book> GetAll();
     Book? GetById(Guid id);
-    void Add(Book book);
-    void Update(Book book);
-    bool RemoveById(Guid id);
+    Task AddAsync(Book book);
+    Task UpdateAsync(Book book);
+    Task<bool> RemoveByIdAsync(Guid id);
 }

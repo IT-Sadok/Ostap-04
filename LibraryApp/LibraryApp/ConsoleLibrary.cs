@@ -27,7 +27,7 @@ public class ConsoleLibrary
         Console.WriteLine("========================");
     }
 
-    public void Run()
+    public async Task Run()
     {
         ShowMenu();
 
@@ -39,10 +39,10 @@ public class ConsoleLibrary
             switch (input)
             {
                 case "1":
-                    AddBook();
+                    await AddBookAsync();
                     break;
                 case "2":
-                    RemoveBook();
+                    await RemoveBookAsync();
                     break;
                 case "3":
                     FilterBooks();
@@ -51,13 +51,13 @@ public class ConsoleLibrary
                     ShowAllBooks();
                     break;
                 case "5":
-                    BorrowBook();
+                    await BorrowBookAsync();
                     break;
                 case "6":
-                    ReturnBook();
+                    await ReturnBookAsync();
                     break;
                 case "7":
-                    EditBook();
+                    await EditBookAsync();
                     break;
                 case "0":
                     return;
@@ -73,7 +73,7 @@ public class ConsoleLibrary
         }
     }
 
-    private void AddBook()
+    private async Task AddBookAsync()
     {
         Console.WriteLine("====== Book adding ======");
         Console.Write("Enter title: ");
@@ -97,7 +97,7 @@ public class ConsoleLibrary
 
         try
         {
-            _libraryService.AddBook(book);
+            await _libraryService.AddBookAsync(book);
             Console.WriteLine("Book added");
         }
         catch (Exception e)
@@ -106,7 +106,7 @@ public class ConsoleLibrary
         }
     }
 
-    private void RemoveBook()
+    private async Task RemoveBookAsync()
     {
         Console.WriteLine("====== Removing book ======");
         Console.Write("Enter id: ");
@@ -118,7 +118,7 @@ public class ConsoleLibrary
             return;
         }
 
-        Console.WriteLine(_libraryService.RemoveById(bookId) ? "Book removed" : "Book with such id is not found");
+        Console.WriteLine(await _libraryService.RemoveByIdAsync(bookId) ? "Book removed" : "Book with such id is not found");
     }
 
     private void FilterBooks()
@@ -148,7 +148,7 @@ public class ConsoleLibrary
         PrintBooks(books);
     }
 
-    private void BorrowBook()
+    private async Task BorrowBookAsync()
     {
         Console.WriteLine("====== Borrowing book ======");
         Console.WriteLine("Write id of book you want to borrow: ");
@@ -162,7 +162,7 @@ public class ConsoleLibrary
 
         try
         {
-            Console.WriteLine(_libraryService.BorrowBook(bookId) ? "Book borrowed" : "Book was already borrowed");
+            Console.WriteLine(await _libraryService.BorrowBookAsync(bookId) ? "Book borrowed" : "Book was already borrowed");
         }
         catch (Exception e)
         {
@@ -170,7 +170,7 @@ public class ConsoleLibrary
         }
     }
 
-    private void ReturnBook()
+    private async Task ReturnBookAsync()
     {
         Console.WriteLine("====== Returning book ======");
         Console.WriteLine("Write id of book you want to return: ");
@@ -184,7 +184,7 @@ public class ConsoleLibrary
 
         try
         {
-            Console.WriteLine(_libraryService.ReturnBook(bookId) ? "Book returned" : "Book is already returned");
+            Console.WriteLine(await _libraryService.ReturnBookAsync(bookId) ? "Book returned" : "Book is already returned");
         }
         catch (Exception e)
         {
@@ -192,22 +192,7 @@ public class ConsoleLibrary
         }
     }
 
-    private static void PrintBooks(IEnumerable<BookModel> books)
-    {
-        var enumerable = books.ToList();
-        if (enumerable.Count == 0)
-        {
-            Console.WriteLine("Nothing found");
-        }
-
-        var num = 1;
-        foreach (var book in enumerable)
-        {
-            Console.WriteLine($"{num++}: {book}");
-        }
-    }
-
-    private void EditBook()
+    private async Task EditBookAsync()
     {
         Console.WriteLine("====== Editing book ======");
         Console.WriteLine("Write id of book you want to edit: ");
@@ -232,12 +217,27 @@ public class ConsoleLibrary
 
         try
         {
-            _libraryService.EditBook(bookId, authorName, title, year);
+            await _libraryService.EditBookAsync(bookId, authorName, title, year);
             Console.WriteLine("Book edited");
         }
         catch (Exception e)
         {
             Console.WriteLine("Error while editing book: " + e.Message);
+        }
+    }
+
+    private static void PrintBooks(IEnumerable<BookModel> books)
+    {
+        var enumerable = books.ToList();
+        if (enumerable.Count == 0)
+        {
+            Console.WriteLine("Nothing found");
+        }
+
+        var num = 1;
+        foreach (var book in enumerable)
+        {
+            Console.WriteLine($"{num++}: {book}");
         }
     }
 }

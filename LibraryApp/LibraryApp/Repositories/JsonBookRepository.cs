@@ -8,16 +8,23 @@ public class JsonBookRepository : IBookRepository
 {
     private readonly string _jsonFilePath;
     private readonly List<Book> _books;
+    private readonly SemaphoreSlim _semaphoreSlim = new(1, 1);
 
-    private readonly JsonSerializerOptions _jsonSerializerOptions = new()
+    private static readonly JsonSerializerOptions JsonSerializerOptions = new()
     {
         WriteIndented = true
     };
 
-    public JsonBookRepository(string jsonFilePath)
+    private JsonBookRepository(string jsonFilePath, List<Book> books)
     {
         _jsonFilePath = jsonFilePath;
-        _books = ReadFromFile();
+        _books = books;
+    }
+
+    public static async Task<JsonBookRepository> CreateAsync(string jsonFilePath)
+    {
+        var books = await ReadFromFileAsync(jsonFilePath);
+        return new JsonBookRepository(jsonFilePath, books);
     }
 
     public IReadOnlyList<Book> GetAll() => _books.AsReadOnly();
@@ -25,48 +32,72 @@ public class JsonBookRepository : IBookRepository
     public Book? GetById(Guid id)
         => _books.FirstOrDefault(b => b.Id == id);
 
-    public void Add(Book book)
+    public async Task AddAsync(Book book)
     {
-        _books.Add(book);
-        Save();
+        await _semaphoreSlim.WaitAsync();
+        try
+        {
+            _books.Add(book);
+            await SaveAsync();
+        }
+        finally
+        {
+            _semaphoreSlim.Release();
+        }
     }
 
-    public void Update(Book book)
+    public async Task UpdateAsync(Book book)
     {
-        var idx = _books.FindIndex(b => b.Id == book.Id);
-        if (idx == -1)
+        await _semaphoreSlim.WaitAsync();
+        try
         {
-            throw new ArgumentException($"Book with id {book.Id} not found");
-        }
+            var idx = _books.FindIndex(b => b.Id == book.Id);
+            if (idx == -1)
+            {
+                throw new ArgumentException($"Book with id {book.Id} not found");
+            }
 
-        _books[idx] = book;
-        Save();
+            _books[idx] = book;
+            await SaveAsync();
+        }
+        finally
+        {
+            _semaphoreSlim.Release();
+        }
     }
 
-    public bool RemoveById(Guid id)
+    public async Task<bool> RemoveByIdAsync(Guid id)
     {
-        var book = _books.FirstOrDefault(b => b.Id == id);
-        if (book == null)
+        await _semaphoreSlim.WaitAsync();
+        try
         {
-            return false;
-        }
+            var book = _books.FirstOrDefault(b => b.Id == id);
+            if (book == null)
+            {
+                return false;
+            }
 
-        if (!_books.Remove(book))
+            if (!_books.Remove(book))
+            {
+                return false;
+            }
+
+            await SaveAsync();
+
+            return true;
+        }
+        finally
         {
-            return false;
+            _semaphoreSlim.Release();
         }
-
-        Save();
-
-        return true;
     }
 
-    private List<Book> ReadFromFile()
+    private static async Task<List<Book>> ReadFromFileAsync(string jsonFilePath)
     {
         try
         {
-            var text = File.ReadAllText(_jsonFilePath);
-            var books = JsonSerializer.Deserialize<List<Book>>(text, _jsonSerializerOptions);
+            var text = await File.ReadAllTextAsync(jsonFilePath);
+            var books = JsonSerializer.Deserialize<List<Book>>(text, JsonSerializerOptions);
 
             return books ?? [];
         }
@@ -78,9 +109,9 @@ public class JsonBookRepository : IBookRepository
         return [];
     }
 
-    private void Save()
+    private async Task SaveAsync()
     {
-        var json = JsonSerializer.Serialize(_books, _jsonSerializerOptions);
-        File.WriteAllText(_jsonFilePath, json);
+        var json = JsonSerializer.Serialize(_books, JsonSerializerOptions);
+        await File.WriteAllTextAsync(_jsonFilePath, json);
     }
 }
