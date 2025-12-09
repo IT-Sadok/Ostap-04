@@ -1,15 +1,18 @@
 ﻿using LibraryApp.Interfaces;
 using LibraryApp.Models;
+using LibraryApp.Simulation;
 
 namespace LibraryApp;
 
 public class ConsoleLibrary
 {
     private readonly ILibraryService _libraryService;
+    private readonly UserActionSimulator _userActionSimulator;
 
     public ConsoleLibrary(ILibraryService libraryService)
     {
         _libraryService = libraryService;
+        _userActionSimulator = new UserActionSimulator(libraryService);
     }
 
     private void ShowMenu()
@@ -21,12 +24,14 @@ public class ConsoleLibrary
         Console.WriteLine("4. Show all books");
         Console.WriteLine("5. Borrow book");
         Console.WriteLine("6. Return book");
+        Console.WriteLine("7. Edit book");
+        Console.WriteLine("88. Simulate users actions");
         Console.WriteLine("0. Exit");
         Console.WriteLine("*. Show menu");
         Console.WriteLine("========================");
     }
 
-    public void Run()
+    public async Task Run()
     {
         ShowMenu();
 
@@ -38,22 +43,28 @@ public class ConsoleLibrary
             switch (input)
             {
                 case "1":
-                    AddBook();
+                    await AddBookAsync();
                     break;
                 case "2":
-                    RemoveBook();
+                    await RemoveBookAsync();
                     break;
                 case "3":
-                    FilterBooks();
+                    await FilterBooksAsync();
                     break;
                 case "4":
-                    ShowAllBooks();
+                    await ShowAllBooksAsync();
                     break;
                 case "5":
-                    BorrowBook();
+                    await BorrowBookAsync();
                     break;
                 case "6":
-                    ReturnBook();
+                    await ReturnBookAsync();
+                    break;
+                case "7":
+                    await EditBookAsync();
+                    break;
+                case "88":
+                    await SimulateUserActionsAsync();
                     break;
                 case "0":
                     return;
@@ -69,7 +80,7 @@ public class ConsoleLibrary
         }
     }
 
-    private void AddBook()
+    private async Task AddBookAsync()
     {
         Console.WriteLine("====== Book adding ======");
         Console.Write("Enter title: ");
@@ -85,7 +96,6 @@ public class ConsoleLibrary
         }
 
         var book = new Book(
-        
             Guid.NewGuid(),
             title,
             author,
@@ -94,7 +104,7 @@ public class ConsoleLibrary
 
         try
         {
-            _libraryService.AddBook(book);
+            await _libraryService.AddBookAsync(book);
             Console.WriteLine("Book added");
         }
         catch (Exception e)
@@ -103,7 +113,7 @@ public class ConsoleLibrary
         }
     }
 
-    private void RemoveBook()
+    private async Task RemoveBookAsync()
     {
         Console.WriteLine("====== Removing book ======");
         Console.Write("Enter id: ");
@@ -115,10 +125,12 @@ public class ConsoleLibrary
             return;
         }
 
-        Console.WriteLine(_libraryService.RemoveById(bookId) ? "Book removed" : "Book with such id is not found");
+        Console.WriteLine(await _libraryService.RemoveByIdAsync(bookId)
+            ? "Book removed"
+            : "Book with such id is not found");
     }
 
-    private void FilterBooks()
+    private async Task FilterBooksAsync()
     {
         Console.WriteLine("====== Filtering books ======");
         Console.Write("Enter author name: ");
@@ -134,18 +146,18 @@ public class ConsoleLibrary
             Title = title,
             Available = available
         };
-        
-        var books = _libraryService.FindBooks(filterModel);
+
+        var books = await _libraryService.FindBooksAsync(filterModel);
         PrintBooks(books);
     }
 
-    private void ShowAllBooks()
+    private async Task ShowAllBooksAsync()
     {
-        var books = _libraryService.GetAllBooks();
+        var books = await _libraryService.GetAllBooksAsync();
         PrintBooks(books);
     }
 
-    private void BorrowBook()
+    private async Task BorrowBookAsync()
     {
         Console.WriteLine("====== Borrowing book ======");
         Console.WriteLine("Write id of book you want to borrow: ");
@@ -159,7 +171,9 @@ public class ConsoleLibrary
 
         try
         {
-            Console.WriteLine(_libraryService.BorrowBook(bookId) ? "Book borrowed" : "Book was already borrowed");
+            Console.WriteLine(await _libraryService.BorrowBookAsync(bookId)
+                ? "Book borrowed"
+                : "Book was already borrowed");
         }
         catch (Exception e)
         {
@@ -167,7 +181,7 @@ public class ConsoleLibrary
         }
     }
 
-    private void ReturnBook()
+    private async Task ReturnBookAsync()
     {
         Console.WriteLine("====== Returning book ======");
         Console.WriteLine("Write id of book you want to return: ");
@@ -181,11 +195,47 @@ public class ConsoleLibrary
 
         try
         {
-            Console.WriteLine(_libraryService.ReturnBook(bookId) ? "Book returned" : "Book is already returned");
+            Console.WriteLine(await _libraryService.ReturnBookAsync(bookId)
+                ? "Book returned"
+                : "Book is already returned");
         }
         catch (Exception e)
         {
             Console.WriteLine("Error while returning book: " + e.Message);
+        }
+    }
+
+    private async Task EditBookAsync()
+    {
+        Console.WriteLine("====== Editing book ======");
+        Console.WriteLine("Write id of book you want to edit: ");
+        var id = Console.ReadLine() ?? string.Empty;
+        if (!Guid.TryParse(id, out var bookId))
+        {
+            Console.WriteLine("Invalid id");
+            return;
+        }
+
+        Console.Write("Enter new author name: ");
+        var authorName = Console.ReadLine() ?? string.Empty;
+        Console.Write("Enter new title: ");
+        var title = Console.ReadLine() ?? string.Empty;
+        Console.Write("Enter new year of publication: ");
+
+        if (!int.TryParse(Console.ReadLine(), out var year))
+        {
+            Console.WriteLine("Invalid input, year is 0");
+            year = 0;
+        }
+
+        try
+        {
+            await _libraryService.EditBookAsync(bookId, authorName, title, year);
+            Console.WriteLine("Book edited");
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("Error while editing book: " + e.Message);
         }
     }
 
@@ -202,5 +252,18 @@ public class ConsoleLibrary
         {
             Console.WriteLine($"{num++}: {book}");
         }
+    }
+
+    private async Task SimulateUserActionsAsync()
+    {
+        Console.WriteLine("====== Simulating user actions ======");
+        Console.WriteLine("Enter number of tasks you want to simulate: ");
+        if (!int.TryParse(Console.ReadLine(), out var taskCount))
+        {
+            Console.WriteLine("Invalid input, task count is 100");
+            taskCount = 100;
+        }
+
+        await _userActionSimulator.SimulateUserActionAsync(taskCount);
     }
 }

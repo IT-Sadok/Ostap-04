@@ -7,13 +7,15 @@ namespace LibraryApp;
 
 internal static class Program
 {
-    private static void Main(string[] args)
+    private static async Task Main(string[] args)
     {
-        const string filePath = "../../../library.json";
-        IBookRepository bookRepository = new JsonBookRepository(filePath);
+        const string filePath = "../../../Data/library.json";
+        const string testAsyncFilePath = "../../../Data/asyncData.json";
+
+        IBookRepository bookRepository = await JsonBookRepository.CreateAsync(testAsyncFilePath);
         ILibraryService libraryService = new LibraryService(bookRepository);
 
         var app = new ConsoleLibrary(libraryService);
-        app.Run();
+        await app.Run();
     }
 }

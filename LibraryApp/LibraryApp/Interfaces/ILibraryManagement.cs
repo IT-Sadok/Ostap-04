@@ -2,6 +2,6 @@
 
 public interface ILibraryManagement
 {
-    bool BorrowBook(Guid id);
-    bool ReturnBook(Guid id);
+    Task<bool> BorrowBookAsync(Guid id);
+    Task<bool> ReturnBookAsync(Guid id);
 }
