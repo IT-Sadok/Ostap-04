@@ -5,14 +5,18 @@ namespace LibraryApp.Services;
 
 public class LibraryService : ILibraryService
 {
-    private readonly IBookRepository _jsonBookRepository;
+    private readonly IBookRepository _bookRepository;
 
     public LibraryService(IBookRepository jsonBookRepository)
     {
-        _jsonBookRepository = jsonBookRepository;
+        _bookRepository = jsonBookRepository;
     }
 
-    public IReadOnlyList<BookModel> GetAllBooks() => _jsonBookRepository.GetAll().Select(ToBookModel).ToList();
+    public async Task<IReadOnlyList<BookModel>> GetAllBooksAsync()
+    {
+        var books = await _bookRepository.GetAllAsync();
+        return books.Select(ToBookModel).ToList();
+    }
 
     public async Task AddBookAsync(Book book)
     {
@@ -24,48 +28,48 @@ public class LibraryService : ILibraryService
         }
 
 
-        if (_jsonBookRepository.GetById(book.Id) is not null)
+        if (await _bookRepository.GetByIdAsync(book.Id) is not null)
         {
             throw new ArgumentException("Book already exists");
         }
 
-        await _jsonBookRepository.AddAsync(book);
+        await _bookRepository.AddAsync(book);
     }
 
     public async Task<bool> RemoveByIdAsync(Guid id)
     {
-        return await _jsonBookRepository.RemoveByIdAsync(id);
+        return await _bookRepository.RemoveByIdAsync(id);
     }
 
     public async Task EditBookAsync(Guid id, string title, string authorName, int yearOfPublication)
     {
-        var book = GetBookById(id);
-
-        var updatedBook = book with
-        {
-            Title = title,
-            AuthorName = authorName,
-            YearOfPublication = yearOfPublication
-        };
-
-        await _jsonBookRepository.UpdateAsync(updatedBook);
+        await _bookRepository.UpdateAsync(id, b =>
+            b with
+            {
+                Title = title,
+                AuthorName = authorName,
+                YearOfPublication = yearOfPublication
+            });
     }
 
-    public IEnumerable<BookModel> FindBooks(BookFilterModel filterModel)
+    public async Task<IEnumerable<BookModel>> FindBooksAsync(BookFilterModel filterModel)
     {
         ArgumentNullException.ThrowIfNull(filterModel);
 
-        var query = _jsonBookRepository.GetAll().AsQueryable();
+        var books = await _bookRepository.GetAllAsync();
 
+        var query = books.AsEnumerable();
 
         if (!string.IsNullOrWhiteSpace(filterModel.AuthorName))
         {
-            query = query.Where(b => b.AuthorName.Contains(filterModel.AuthorName));
+            query = query.Where(b =>
+                b.AuthorName.Contains(filterModel.AuthorName, StringComparison.OrdinalIgnoreCase));
         }
 
         if (!string.IsNullOrWhiteSpace(filterModel.Title))
         {
-            query = query.Where(b => b.Title.Contains(filterModel.Title));
+            query = query.Where(b =>
+                b.Title.Contains(filterModel.Title, StringComparison.OrdinalIgnoreCase));
         }
 
         if (filterModel.Available == true)
@@ -73,48 +77,46 @@ public class LibraryService : ILibraryService
             query = query.Where(b => b.BookState == BookState.Available);
         }
 
-        return query.AsEnumerable().Select(ToBookModel);
+        return query.Select(ToBookModel).ToList();
     }
 
     public async Task<bool> BorrowBookAsync(Guid id)
     {
-        var book = GetBookById(id);
+        var book = await GetBookByIdAsync(id);
         if (book.BookState == BookState.CheckedOut)
         {
             return false;
         }
 
-        var updatedBook = book with
-        {
-            BookState = BookState.CheckedOut
-        };
-
-        await _jsonBookRepository.UpdateAsync(updatedBook);
+        await _bookRepository.UpdateAsync(id, b =>
+            b with
+            {
+                BookState = BookState.CheckedOut
+            });
 
         return true;
     }
 
     public async Task<bool> ReturnBookAsync(Guid id)
     {
-        var book = GetBookById(id);
+        var book = await GetBookByIdAsync(id);
 
         if (book.BookState == BookState.Available)
         {
             return false;
         }
 
-        var updatedBook = book with
-        {
-            BookState = BookState.Available
-        };
-
-        await _jsonBookRepository.UpdateAsync(updatedBook);
+        await _bookRepository.UpdateAsync(id, b =>
+            b with
+            {
+                BookState = BookState.Available
+            });
 
         return true;
     }
 
-    private Book GetBookById(Guid id) =>
-        _jsonBookRepository.GetById(id) ?? throw new KeyNotFoundException("Book not found");
+    private async Task<Book> GetBookByIdAsync(Guid id) =>
+        await _bookRepository.GetByIdAsync(id) ?? throw new KeyNotFoundException("Book not found");
 
     private static BookModel ToBookModel(Book book) => new(
         book.Id,

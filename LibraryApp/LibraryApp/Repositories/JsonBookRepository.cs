@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Collections.Concurrent;
+using System.Text.Json;
 using LibraryApp.Interfaces;
 using LibraryApp.Models;
 
@@ -27,10 +28,33 @@ public class JsonBookRepository : IBookRepository
         return new JsonBookRepository(jsonFilePath, books);
     }
 
-    public IReadOnlyList<Book> GetAll() => _books.AsReadOnly();
+    public async Task<IReadOnlyList<Book>> GetAllAsync()
+    {
+        // to receive up-to-date data
+        // maybe better to use ConcurrentDictionary<Guid, Book>
+        await _semaphoreSlim.WaitAsync();
+        try
+        {
+            return _books.AsReadOnly();
+        }
+        finally
+        {
+            _semaphoreSlim.Release();
+        }
+    }
 
-    public Book? GetById(Guid id)
-        => _books.FirstOrDefault(b => b.Id == id);
+    public async Task<Book?> GetByIdAsync(Guid id)
+    {
+        await _semaphoreSlim.WaitAsync();
+        try
+        {
+            return _books.FirstOrDefault(b => b.Id == id);
+        }
+        finally
+        {
+            _semaphoreSlim.Release();
+        }
+    }
 
     public async Task AddAsync(Book book)
     {
@@ -46,18 +70,16 @@ public class JsonBookRepository : IBookRepository
         }
     }
 
-    public async Task UpdateAsync(Book book)
+    public async Task UpdateAsync(Guid id, Func<Book, Book> update)
     {
         await _semaphoreSlim.WaitAsync();
         try
         {
-            var idx = _books.FindIndex(b => b.Id == book.Id);
-            if (idx == -1)
-            {
-                throw new ArgumentException($"Book with id {book.Id} not found");
-            }
+            var index = _books.FindIndex(b => b.Id == id);
+            if (index == -1)
+                return;
 
-            _books[idx] = book;
+            _books[index] = update(_books[index]);
             await SaveAsync();
         }
         finally
@@ -96,6 +118,12 @@ public class JsonBookRepository : IBookRepository
     {
         try
         {
+            if (!File.Exists(jsonFilePath))
+            {
+                await File.WriteAllTextAsync(jsonFilePath, "[]");
+                return [];
+            }
+
             var text = await File.ReadAllTextAsync(jsonFilePath);
             var books = JsonSerializer.Deserialize<List<Book>>(text, JsonSerializerOptions);
 
@@ -103,10 +131,9 @@ public class JsonBookRepository : IBookRepository
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.Message);
+            Console.WriteLine("Error reading file: " + ex.Message);
+            return [];
         }
-
-        return [];
     }
 
     private async Task SaveAsync()

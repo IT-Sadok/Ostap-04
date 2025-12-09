@@ -10,7 +10,9 @@ internal static class Program
     private static async Task Main(string[] args)
     {
         const string filePath = "../../../Data/library.json";
-        IBookRepository bookRepository = await JsonBookRepository.CreateAsync(filePath);
+        const string testAsyncFilePath = "../../../Data/asyncData.json";
+
+        IBookRepository bookRepository = await JsonBookRepository.CreateAsync(testAsyncFilePath);
         ILibraryService libraryService = new LibraryService(bookRepository);
 
         var app = new ConsoleLibrary(libraryService);

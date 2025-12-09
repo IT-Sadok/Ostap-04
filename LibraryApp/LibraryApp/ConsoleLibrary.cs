@@ -1,15 +1,18 @@
 ﻿using LibraryApp.Interfaces;
 using LibraryApp.Models;
+using LibraryApp.Simulation;
 
 namespace LibraryApp;
 
 public class ConsoleLibrary
 {
     private readonly ILibraryService _libraryService;
+    private readonly UserActionSimulator _userActionSimulator;
 
     public ConsoleLibrary(ILibraryService libraryService)
     {
         _libraryService = libraryService;
+        _userActionSimulator = new UserActionSimulator(libraryService);
     }
 
     private void ShowMenu()
@@ -22,6 +25,7 @@ public class ConsoleLibrary
         Console.WriteLine("5. Borrow book");
         Console.WriteLine("6. Return book");
         Console.WriteLine("7. Edit book");
+        Console.WriteLine("88. Simulate users actions");
         Console.WriteLine("0. Exit");
         Console.WriteLine("*. Show menu");
         Console.WriteLine("========================");
@@ -45,10 +49,10 @@ public class ConsoleLibrary
                     await RemoveBookAsync();
                     break;
                 case "3":
-                    FilterBooks();
+                    await FilterBooksAsync();
                     break;
                 case "4":
-                    ShowAllBooks();
+                    await ShowAllBooksAsync();
                     break;
                 case "5":
                     await BorrowBookAsync();
@@ -58,6 +62,9 @@ public class ConsoleLibrary
                     break;
                 case "7":
                     await EditBookAsync();
+                    break;
+                case "88":
+                    await SimulateUserActions();
                     break;
                 case "0":
                     return;
@@ -118,10 +125,12 @@ public class ConsoleLibrary
             return;
         }
 
-        Console.WriteLine(await _libraryService.RemoveByIdAsync(bookId) ? "Book removed" : "Book with such id is not found");
+        Console.WriteLine(await _libraryService.RemoveByIdAsync(bookId)
+            ? "Book removed"
+            : "Book with such id is not found");
     }
 
-    private void FilterBooks()
+    private async Task FilterBooksAsync()
     {
         Console.WriteLine("====== Filtering books ======");
         Console.Write("Enter author name: ");
@@ -138,13 +147,13 @@ public class ConsoleLibrary
             Available = available
         };
 
-        var books = _libraryService.FindBooks(filterModel);
+        var books = await _libraryService.FindBooksAsync(filterModel);
         PrintBooks(books);
     }
 
-    private void ShowAllBooks()
+    private async Task ShowAllBooksAsync()
     {
-        var books = _libraryService.GetAllBooks();
+        var books = await _libraryService.GetAllBooksAsync();
         PrintBooks(books);
     }
 
@@ -162,7 +171,9 @@ public class ConsoleLibrary
 
         try
         {
-            Console.WriteLine(await _libraryService.BorrowBookAsync(bookId) ? "Book borrowed" : "Book was already borrowed");
+            Console.WriteLine(await _libraryService.BorrowBookAsync(bookId)
+                ? "Book borrowed"
+                : "Book was already borrowed");
         }
         catch (Exception e)
         {
@@ -184,7 +195,9 @@ public class ConsoleLibrary
 
         try
         {
-            Console.WriteLine(await _libraryService.ReturnBookAsync(bookId) ? "Book returned" : "Book is already returned");
+            Console.WriteLine(await _libraryService.ReturnBookAsync(bookId)
+                ? "Book returned"
+                : "Book is already returned");
         }
         catch (Exception e)
         {
@@ -239,5 +252,18 @@ public class ConsoleLibrary
         {
             Console.WriteLine($"{num++}: {book}");
         }
+    }
+
+    private async Task SimulateUserActions()
+    {
+        Console.WriteLine("====== Simulating user actions ======");
+        Console.WriteLine("Enter number of tasks you want to simulate: ");
+        if (!int.TryParse(Console.ReadLine(), out var taskCount))
+        {
+            Console.WriteLine("Invalid input, task count is 100");
+            taskCount = 100;
+        }
+
+        await _userActionSimulator.SimulateUserActionAsync(taskCount);
     }
 }

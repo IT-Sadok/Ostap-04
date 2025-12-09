@@ -4,5 +4,5 @@ namespace LibraryApp.Interfaces;
 
 public interface IBookSearchService
 {
-    IEnumerable<BookModel> FindBooks(BookFilterModel filterModel);
+    Task<IEnumerable<BookModel>> FindBooksAsync(BookFilterModel filterModel);
 }
