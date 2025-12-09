@@ -21,6 +21,7 @@ public class ConsoleLibrary
         Console.WriteLine("4. Show all books");
         Console.WriteLine("5. Borrow book");
         Console.WriteLine("6. Return book");
+        Console.WriteLine("7. Edit book");
         Console.WriteLine("0. Exit");
         Console.WriteLine("*. Show menu");
         Console.WriteLine("========================");
@@ -55,6 +56,9 @@ public class ConsoleLibrary
                 case "6":
                     ReturnBook();
                     break;
+                case "7":
+                    EditBook();
+                    break;
                 case "0":
                     return;
                 case "*":
@@ -85,7 +89,6 @@ public class ConsoleLibrary
         }
 
         var book = new Book(
-        
             Guid.NewGuid(),
             title,
             author,
@@ -134,7 +137,7 @@ public class ConsoleLibrary
             Title = title,
             Available = available
         };
-        
+
         var books = _libraryService.FindBooks(filterModel);
         PrintBooks(books);
     }
@@ -201,6 +204,40 @@ public class ConsoleLibrary
         foreach (var book in enumerable)
         {
             Console.WriteLine($"{num++}: {book}");
+        }
+    }
+
+    private void EditBook()
+    {
+        Console.WriteLine("====== Editing book ======");
+        Console.WriteLine("Write id of book you want to edit: ");
+        var id = Console.ReadLine() ?? string.Empty;
+        if (!Guid.TryParse(id, out var bookId))
+        {
+            Console.WriteLine("Invalid id");
+            return;
+        }
+
+        Console.Write("Enter new author name: ");
+        var authorName = Console.ReadLine() ?? string.Empty;
+        Console.Write("Enter new title: ");
+        var title = Console.ReadLine() ?? string.Empty;
+        Console.Write("Enter new year of publication: ");
+
+        if (!int.TryParse(Console.ReadLine(), out var year))
+        {
+            Console.WriteLine("Invalid input, year is 0");
+            year = 0;
+        }
+
+        try
+        {
+            _libraryService.EditBook(bookId, authorName, title, year);
+            Console.WriteLine("Book edited");
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("Error while editing book: " + e.Message);
         }
     }
 }

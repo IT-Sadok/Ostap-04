@@ -98,6 +98,20 @@ public class LibraryService : ILibraryService
         return true;
     }
 
+    public void EditBook(Guid id, string title, string authorName, int yearOfPublication)
+    {
+        var book = GetBookById(id);
+
+        var updatedBook = book with
+        {
+            Title = title,
+            AuthorName = authorName,
+            YearOfPublication = yearOfPublication
+        };
+        
+        _jsonBookRepository.Update(updatedBook);
+    }
+
     private Book GetBookById(Guid id) =>
         _jsonBookRepository.GetById(id) ?? throw new KeyNotFoundException("Book not found");
 
