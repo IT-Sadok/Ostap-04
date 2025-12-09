@@ -17,7 +17,7 @@ public class UserActionSimulator
 
     public async Task SimulateUserActionAsync(int taskCount)
     {
-        await SeedBooks(taskCount);
+        await SeedBooksAsync(taskCount);
 
         var tasks = new List<Task>();
         for (int i = 0; i < taskCount; i++)
@@ -52,7 +52,7 @@ public class UserActionSimulator
         await Task.WhenAll(tasks);
     }
 
-    private async Task SeedBooks(int count)
+    private async Task SeedBooksAsync(int count)
     {
         var allBooks = await _libraryService.GetAllBooksAsync();
         if (allBooks.Count <= count)

@@ -64,7 +64,7 @@ public class ConsoleLibrary
                     await EditBookAsync();
                     break;
                 case "88":
-                    await SimulateUserActions();
+                    await SimulateUserActionsAsync();
                     break;
                 case "0":
                     return;
@@ -254,7 +254,7 @@ public class ConsoleLibrary
         }
     }
 
-    private async Task SimulateUserActions()
+    private async Task SimulateUserActionsAsync()
     {
         Console.WriteLine("====== Simulating user actions ======");
         Console.WriteLine("Enter number of tasks you want to simulate: ");
